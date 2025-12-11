@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:5173") // Allow React to access this
 @RestController
 @RequestMapping("/songs") // All endpoints start with /songs
 public class SongController {
