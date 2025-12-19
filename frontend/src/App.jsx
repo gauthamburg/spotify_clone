@@ -3,26 +3,53 @@ import axios from 'axios'
 import './App.css'
 
 function App() {
+  // --- AUTH STATE ---
+  const [user, setUser] = useState(null) // Stores logged-in user info
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+
+  // --- MUSIC APP STATE ---
   const [songs, setSongs] = useState([])
   const [currentAudio, setCurrentAudio] = useState(null)
   const [playingSongId, setPlayingSongId] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   
-  // State for the "Add Song" Modal
   const [showModal, setShowModal] = useState(false)
   const [newSong, setNewSong] = useState({
-    title: '',
-    artist: '',
-    album: '',
-    duration: 0,
-    thumbnailUrl: '',
-    audioUrl: ''
+    title: '', artist: '', album: '', duration: 0, thumbnailUrl: '', audioUrl: ''
   })
 
   useEffect(() => {
-    fetchSongs()
-  }, [])
+    if (user) {
+      fetchSongs()
+    }
+  }, [user]) // Only fetch songs AFTER login
 
+  const handleLogin = (e) => {
+    e.preventDefault()
+    axios.post('http://localhost:8080/auth/login', { username, password })
+      .then(response => {
+        console.log("Logged in!", response.data)
+        setUser(response.data) // Save user info (including role)
+        setAuthError('')
+      })
+      .catch(error => {
+        console.error("Login failed", error)
+        setAuthError('Invalid username or password!')
+      })
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    if (currentAudio) {
+      currentAudio.pause() // Stop music on logout
+    }
+    setPlayingSongId(null)
+    setIsPlaying(false)
+  }
+
+  // ... (Keep existing fetchSongs, handlePlayPause, handleSaveSong logic) ...
   const fetchSongs = () => {
     axios.get('http://localhost:8080/songs')
       .then(response => setSongs(response.data))
@@ -31,44 +58,66 @@ function App() {
 
   const handlePlayPause = (song) => {
     if (playingSongId === song.id) {
-      // Toggle Play/Pause for current song
       if (isPlaying) {
-        currentAudio.pause()
-        setIsPlaying(false)
+        currentAudio.pause(); setIsPlaying(false)
       } else {
-        currentAudio.play()
-        setIsPlaying(true)
+        currentAudio.play(); setIsPlaying(true)
       }
       return
     }
-
-    // New Song selected
-    if (currentAudio) {
-      currentAudio.pause()
-      currentAudio.currentTime = 0
-    }
-
+    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0 }
     const audio = new Audio(song.audioUrl)
     audio.play()
     setCurrentAudio(audio)
     setPlayingSongId(song.id)
     setIsPlaying(true)
-    
-    // Auto-reset when song ends
     audio.onended = () => setIsPlaying(false)
   }
 
   const handleSaveSong = () => {
     axios.post('http://localhost:8080/songs', newSong)
       .then(response => {
-        console.log("Saved:", response.data)
-        setShowModal(false) // Close modal
-        fetchSongs() // Refresh list
-        setNewSong({ title: '', artist: '', album: '', duration: 0, thumbnailUrl: '', audioUrl: '' }) // Reset form
+        setShowModal(false); fetchSongs()
+        setNewSong({ title: '', artist: '', album: '', duration: 0, thumbnailUrl: '', audioUrl: '' })
       })
       .catch(error => console.error("Error saving song:", error))
   }
 
+  // --- RENDER: LOGIN SCREEN ---
+  if (!user) {
+    return (
+      <div className="login-container" style={{
+        height: '100vh', display: 'flex', flexDirection: 'column', 
+        justifyContent: 'center', alignItems: 'center', backgroundColor: '#121212', color: 'white'
+      }}>
+        <h1 style={{fontSize: '3rem', marginBottom: '40px'}}>🟢 Spotify Clone</h1>
+        <form onSubmit={handleLogin} style={{display: 'flex', flexDirection: 'column', gap: '15px', width: '300px'}}>
+          <input 
+            placeholder="Username" 
+            value={username} 
+            onChange={e => setUsername(e.target.value)}
+            style={{padding: '12px', borderRadius: '30px', border: 'none'}}
+          />
+          <input 
+            type="password" 
+            placeholder="Password" 
+            value={password} 
+            onChange={e => setPassword(e.target.value)}
+            style={{padding: '12px', borderRadius: '30px', border: 'none'}}
+          />
+          <button type="submit" style={{
+            padding: '12px', borderRadius: '30px', border: 'none', 
+            backgroundColor: '#1db954', color: 'white', fontWeight: 'bold', cursor: 'pointer'
+          }}>
+            LOG IN
+          </button>
+          {authError && <p style={{color: 'red', textAlign: 'center'}}>{authError}</p>}
+        </form>
+      </div>
+    )
+  }
+
+  // --- RENDER: MAIN APP ---
   return (
     <div className="app-container">
       {/* Sidebar */}
@@ -77,14 +126,27 @@ function App() {
         <div className="nav-item active">🏠 Home</div>
         <div className="nav-item">🔍 Search</div>
         <div className="nav-item">📚 Your Library</div>
-        <div className="nav-item" style={{marginTop: 'auto'}}>➕ Create Playlist</div>
+        
+        <div style={{marginTop: 'auto', padding: '10px', fontSize: '0.9rem', color: 'gray'}}>
+          Logged in as: <strong style={{color: 'white'}}>{user.username}</strong>
+          <br />
+          Role: <span style={{color: '#1db954'}}>{user.role}</span>
+        </div>
+        <button onClick={handleLogout} style={{
+          marginTop: '10px', background: 'transparent', border: '1px solid gray', 
+          color: 'white', padding: '8px', borderRadius: '20px', cursor: 'pointer'
+        }}>Logout</button>
       </div>
 
       {/* Main Content */}
       <div className="main-content">
         <div className="header">
           <h2>Good afternoon</h2>
-          <button className="add-btn" onClick={() => setShowModal(true)}>+ Add Song</button>
+          
+          {/* ONLY SHOW 'ADD SONG' IF USER IS ADMIN OR ARTIST */}
+          {(user.role === 'ADMIN' || user.role === 'ARTIST') && (
+            <button className="add-btn" onClick={() => setShowModal(true)}>+ Add Song</button>
+          )}
         </div>
 
         <div className="song-grid">
@@ -125,7 +187,7 @@ function App() {
         <div style={{width: '30%'}}></div>
       </div>
 
-      {/* Add Song Modal */}
+      {/* Add Song Modal - Only accessible if button is clicked */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -133,9 +195,8 @@ function App() {
             <input placeholder="Song Title" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} />
             <input placeholder="Artist" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} />
             <input placeholder="Album" value={newSong.album} onChange={e => setNewSong({...newSong, album: e.target.value})} />
-            <input placeholder="Image URL (e.g. https://...)" value={newSong.thumbnailUrl} onChange={e => setNewSong({...newSong, thumbnailUrl: e.target.value})} />
-            <input placeholder="Audio URL (e.g. https://...mp3)" value={newSong.audioUrl} onChange={e => setNewSong({...newSong, audioUrl: e.target.value})} />
-            
+            <input placeholder="Image URL" value={newSong.thumbnailUrl} onChange={e => setNewSong({...newSong, thumbnailUrl: e.target.value})} />
+            <input placeholder="Audio URL" value={newSong.audioUrl} onChange={e => setNewSong({...newSong, audioUrl: e.target.value})} />
             <div className="modal-actions">
               <button onClick={() => setShowModal(false)} style={{background: 'transparent', border: 'none', color: 'white', cursor: 'pointer'}}>Cancel</button>
               <button onClick={handleSaveSong} className="add-btn">Save</button>
