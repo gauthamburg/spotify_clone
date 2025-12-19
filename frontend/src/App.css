@@ -1,0 +1,209 @@
+/* Dark Theme Reset */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: white;
+  font-family: 'Circular Std', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  overflow: hidden; /* Prevent full page scroll, we scroll internal areas */
+}
+
+/* Main Layout: Sidebar - Content - Player */
+.app-container {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 1fr 90px;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: #000000;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item {
+  color: #b3b3b3;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 10px 0;
+  transition: 0.2s;
+}
+
+.nav-item:hover {
+  color: white;
+}
+
+.nav-item.active {
+  color: white;
+}
+
+/* Main Content Area */
+.main-content {
+  background: linear-gradient(180deg, #222222 0%, #121212 100%);
+  padding: 24px;
+  overflow-y: auto; /* Allow scrolling here */
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.add-btn {
+  background-color: white;
+  color: black;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.add-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Song Grid */
+.song-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.song-card {
+  background-color: #181818;
+  padding: 16px;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+  position: relative;
+}
+
+.song-card:hover {
+  background-color: #282828;
+}
+
+.song-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.play-icon-overlay {
+  position: absolute;
+  bottom: 110px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  background-color: #1db954;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.song-card:hover .play-icon-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Bottom Player */
+.player-bar {
+  grid-column: 1 / -1;
+  background-color: #181818;
+  border-top: 1px solid #282828;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 30%;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40%;
+}
+
+.play-btn-large {
+  background-color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal for Adding Songs */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #282828;
+  padding: 32px;
+  border-radius: 8px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-content input {
+  background-color: #3e3e3e;
+  border: 1px solid transparent;
+  padding: 12px;
+  border-radius: 4px;
+  color: white;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
